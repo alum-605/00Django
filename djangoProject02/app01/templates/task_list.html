@@ -1,0 +1,225 @@
+{% extends 'layout.html' %}
+{% block css %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {#        <div style="margin-right: 10px" class="clearfix">#}
+
+        <div class="panel panel-success">
+            <div class="panel-heading">
+                <h3 class="panel-title fa fa-camera-retro"> 表单 </h3>
+            </div>
+            <div class="panel-body">
+                <form id="taskForm" method="post" novalidate>
+                    {# {% csrf_token %} ajax提交已经在视图函数中设置跳过csrf验证 #}
+                    <div class="clearfix">
+                        {% for field in form %}
+                            <div class="col-xs-6">
+                                <div class="form-group" style="position: relative; margin-bottom: 20px">
+                                    <label>{{ field.label }}</label>
+                                    {{ field }}
+                                    <span style="color: red; position: absolute" class="msg-error"></span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="col-xs-12">
+                            {# 注意type是button不是submit submit会刷新#}
+                            <button id="btnAdd" type="button" class="btn btn-success"> 提交</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <hr/>
+
+        <h3>任务列表</h3>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>任务标题</th>
+                <th>详细信息</th>
+                <th>等级</th>
+                <th>负责人</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in queryset %}
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.detail }}</td>
+                    <td>{{ item.get_level_display }}</td>
+                    <td>{{ item.user_t }}</td>
+                    <td>
+                        <a class="btn btn-primary btn-xs" href="#">编辑</a>
+                        <a class="btn btn-danger btn-xs" href="#">删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <ul class="pagination">
+            {{ page_str }}
+        </ul>
+
+        <hr/>
+        <div>
+            <h1>学习Ajax</h1>
+            <h3>示例1</h3>
+            {#            <a class="btn btn-success" href="/task/add"> 添加任务</a>   不使用跳转       #}
+            {#            <button type="button" class="btn btn-primary" onclick="f1()">点击添加</button>#}
+            <input type="button" class="btn btn-primary" value="点击添加1" id="btn1">
+            <input type="button" class="btn btn-primary" value="点击添加2" onclick="f2()">
+
+            <h3>示例2</h3>
+            <input type="text" id="txtUser" placeholder="姓名"/>
+            <input type="text" id="txtPwd" placeholder="密码"/>
+            <input id="btn2" type="button" class="btn btn-primary" value="点击提交"/>
+
+            <h3>示例3</h3>
+            <form id="form3">
+                {# input 不需要id了 #}
+                <input type="text" name="txtUser" placeholder="姓名"/>
+                <input type="text" name="txtPwd" placeholder="密码"/>
+                <input type="text" name="txtAge" placeholder="年龄"/>
+                <input type="text" name="txtEmail" placeholder="邮箱"/>
+                <input type="text" name="txtMore" placeholder="介绍"/>
+                <input id="btn3" type="button" class="btn btn-primary" value="点击提交"/>
+            </form>
+
+
+            {#        </div>#}
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+
+        $(function () {
+            // 页面框架加载完成之后代码自动执行
+            bindBtn1Event();
+            bindBtn2Event();
+            bindBtn3Event();
+            bindBtnAddEvent();
+        })
+
+        // jQuery 实现
+        function bindBtn1Event() {
+            $("#btn1").click(function () {
+                console.log("执行f1()")
+                $.ajax({
+                    url: '/task/ajax/',
+                    {#  url:'/task/ajax/',  其实有'/'表示从跟路径开始，无'/'表示从当前路径开始#}
+                    type: 'GET',
+                    {# 后端拿到的是一个字典 <QueryDict: {'n1': ['123'], 'n2': ['asda']}> #}
+                    data: {
+                        n1: 123,
+                        n2: "asda",
+                    },
+                    {#发送成功后自动执行的函数，res为返回值#}
+                    {# 将json字符串格式的res反序列化js中的对象 以便调用 #}
+                    dataType: "JSON",
+                    success: function (res) {
+                        console.log(res)
+                        {# {status: 'success', data: Array(4)} #}
+                        console.log(res.status)
+                        {# success #}
+                        console.log(res.data)
+                        {# (4) [11, 22, 33, 44] #}
+                    }
+                })
+            })
+        }
+
+        function bindBtn2Event() {
+            $("#btn2").click(function () {
+                $.ajax({
+                    url: "/task/ajax/",
+                    type: "post",
+                    data: {
+                        {# 由对应id的input框输入内容决定 #}
+                        name: $("#txtUser").val(),
+                        pwd: $("#txtPwd").val()
+                    }
+                })
+            })
+        }
+
+        function bindBtn3Event() {
+            $("#btn3").click(function () {
+                $.ajax({
+                    url: "/task/ajax/",
+                    type: "post",
+                    data: $("#form3").serialize(),
+                    {# 使用form简化手写量  #}
+                    //{
+                    //name: $("#txtUser").val(),
+                    //pwd: $("#txtPwd").val(),
+                    //age: $("#txtAge").val(),
+                    //email: $("#txtEmail").val(),
+                    //more: $("#txtMore").val(),
+                    //}
+                })
+            })
+        }
+
+        function bindBtnAddEvent() {
+            $("#btnAdd").click(function () {
+                //清空错误信息
+                $(".msg-error").empty();
+                $.ajax({
+                    url: "/task/add/",
+                    type: "post",
+                    data: $("#taskForm").serialize(),
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status === "True") {
+                            alert("添加成功");
+                            // js实现刷新页面
+                            location.reload();
+                        } else {
+                            //alert("添加失败")
+                            //$.each(对象,方式)
+                            $.each(res.error, function (k, v) {
+                                //console.log(k,v) 如titile ['这个字段是必填项。'] v是数组
+                                //django自动生成的标签都带一个id由"id_字段名"组成
+                                $("#id_" + k).next().text(v[0]);
+                                // $("#id_"+k)找到输入框 .next()找到在其下方的标签 .text(v)在其中添加内容
+                            })
+                        }
+                    }
+                })
+            })
+        }
+
+        // DOME实现
+        function f2() {
+            console.log("执行f2()")
+            $.ajax({
+                url: '/task/ajax/',
+                {# ajax的POST请求需要去视图函数中加上@csrf_exempt #}
+                type: 'POST',
+                data: {
+                    n1: 456,
+                    n2: "alum"
+                },
+                success: function (res) {
+                    console.log(res)
+                    console.log(res.status)
+                    {# undefined #}
+                    console.log(res.data)
+                    {# undefined #}
+                }
+            })
+
+        }
+
+
+
+    </script>
+
+{% endblock %}

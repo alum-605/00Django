@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+{% block css %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div style="margin-right: 10px" class="clearfix">
+            <a class="btn btn-success" href="/admin/add"> 添加管理员</a>
+        </div>
+        <div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title fa fa-camera-retro"> 管理员列表 </h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>管理员账号</th>
+                            <th>密码</th>
+                            <th>重置密码</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in models %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>*******</td>
+                                <td>
+                                    <a class="btn btn-warning btn-xs" href="/admin/{{ item.id }}/reset/">重置密码</a>
+                                </td>
+                                <td>
+                                    <a class="btn btn-primary btn-xs" href="/admin/{{ item.id }}/edit/">编辑</a>
+                                    <a class="btn btn-danger btn-xs" href="/admin/{{ item.id }}/delete/">删除</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <ul class="pagination">
+            {{ page_str }}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block js %}{% endblock %}

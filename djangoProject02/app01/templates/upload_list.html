@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+{% block css %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">基础文件上传</h3>
+            </div>
+            <div class="panel-body">
+                <!-- form标签中的enctype="multipart/form-data"属性支持上传文件-->
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-sm-2">
+                            <input type="text" name="photo" placeholder="sometext">
+                        </div>
+                        <div class="col-sm-2">
+                            <input type="file" name="photo_file-1">
+                        </div>
+                        <div class="col-sm-2">
+                            <input type="file" name="photo_file-2">
+                        </div>
+                        <div class="col-sm-2">
+                            <input type="file" name="photo_file-3">
+                        </div>
+                    </div>
+                    <input type="submit" value="提 交" style="margin-top: 10px" class="btn btn-success">
+                </form>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}{% endblock %}

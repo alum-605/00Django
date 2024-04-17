@@ -1,0 +1,411 @@
+{% extends "layout.html" %}
+{% load static %}
+{% block css %}{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <h3>数据统计</h3>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">折线图</h3>
+            </div>
+            <div class="panel-body">
+                <!-- Step 1.2: 为 ECharts 准备一个定义了宽高的 DOM -->
+                <div id="m1" style="width: 100%;height:450px;"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">柱状图</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="m2" style="width: 100%;height:400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">饼图</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="m3" style="width: 100%;height:400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">highcharts可缩放时间轴的折线图</h3>
+            </div>
+            <div class="panel-body">
+                <div id="m4" style="width: 100%;height:450px;"></div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">highcharts散点图</h3>
+            </div>
+            <div class="panel-body">
+                <!-- Step 2.2: 为 Highcharts 准备一个定义了宽高的 DOM -->
+                <div id="m5" style="width: 100%;height:450px;"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    {# Step 1.1: 引入js #}
+    <script src="{% static 'js/echarts.js' %}"></script>
+    {# Step 2.1: 引入js #}
+    <script src="{% static 'js/highcharts.js' %}"></script>
+    <script type="text/javascript">
+        /**
+         * Step 1 --> Echart
+         * Step 2 --> Highcharts
+         */
+        $(function () {
+            initline();
+            initBar();
+            initPie();
+            initHighchartsLine();
+            initScatter();
+        })
+
+        /**
+         * 初始化折线图
+         */
+        function initline() {
+            // Step 1.3: 基于准备好的dom，初始化echarts实例
+            var myChart = echarts.init(document.getElementById('m1'));
+            // Step 1.4: 指定图表的配置项和数据
+            var option = {
+                title: {
+                    text: 'Stacked Line'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: ['Email', 'Union Ads', 'Video Ads', 'Direct', 'Search Engine'],
+                    bottom: 0
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: []
+            };
+
+            $.ajax({
+                url: "/chart/line/",
+                type: "GET",
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        //注意数据类型是列表or字典
+                        option.series = res.data;
+                        //Step 1.5: 使用刚指定的配置项和数据显示图表。
+                        myChart.setOption(option);
+                    } else {
+                        console.log("数据不存在")
+                    }
+
+                }
+            })
+
+        }
+
+        /**
+         * 初始化柱状图
+         */
+        function initBar() {
+            // 基于准备好的dom，初始化echarts实例
+            var myChart = echarts.init(document.getElementById('m2'));
+
+            // 指定图表的配置项和数据
+            var option = {
+                title: {
+                    text: 'ECharts 入门示例'
+                },
+                tooltip: {},
+                legend: {
+                    data: [],  //后台获取
+                    bottom: 0 //底部图注
+                },
+                xAxis: {
+                    data: []  //后台获取
+                },
+                yAxis: {},
+                series: []  //后台获取
+            };
+
+            $.ajax({
+                url: "/chart/bar/",
+                type: "GET",
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        option.legend.data = res.data.legend;
+                        option.xAxis.data = res.data.x_axis;
+                        option.series = res.data.data_list;
+                        // 使用刚指定的配置项和数据显示图表。
+                        myChart.setOption(option);
+                    } else {
+                        console.log("数据不存在")
+                    }
+
+                }
+            })
+
+
+        }
+
+        /**
+         * 初始化饼状图
+         */
+        function initPie() {
+            var myChart = echarts.init(document.getElementById('m3'));
+
+            var option = {
+                title: {
+                    text: 'Referer of a Website',
+                    subtext: 'Fake Data',
+                    left: 'center' //title位置
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    bottom: 0
+                },
+                series: [
+                    {
+                        name: 'Access From',
+                        type: 'pie',
+                        radius: '60%',
+                        data: [],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 20,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+
+            $.ajax({
+                url: "/chart/pie/",
+                type: "GET",
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        //注意数据类型是列表or字典
+                        option.series[0].data = res.data;
+                        //console.log(option.series.data)
+                        myChart.setOption(option);
+                    } else {
+                        console.log("数据不存在")
+                    }
+
+                }
+            })
+
+        }
+
+        //highcharts实例
+        function initHighchartsLine() {
+            var chart = null;
+            $.getJSON('https://data.jianshukeji.com/jsonp?filename=json/usdeur.json&callback=?', function (data) {
+                chart = Highcharts.chart('m4', {
+                    chart: {
+                        zoomType: 'x'
+                    },
+                    title: {
+                        text: '美元兑欧元汇率走势图'
+                    },
+                    subtitle: {
+                        text: document.ontouchstart === undefined ?
+                            '鼠标拖动可以进行缩放' : '手势操作进行缩放'
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        dateTimeLabelFormats: {
+                            millisecond: '%H:%M:%S.%L',
+                            second: '%H:%M:%S',
+                            minute: '%H:%M',
+                            hour: '%H:%M',
+                            day: '%m-%d',
+                            week: '%m-%d',
+                            month: '%Y-%m',
+                            year: '%Y'
+                        }
+                    },
+                    tooltip: {
+                        dateTimeLabelFormats: {
+                            millisecond: '%H:%M:%S.%L',
+                            second: '%H:%M:%S',
+                            minute: '%H:%M',
+                            hour: '%H:%M',
+                            day: '%Y-%m-%d',
+                            week: '%m-%d',
+                            month: '%Y-%m',
+                            year: '%Y'
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: '汇率'
+                        }
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    plotOptions: {
+                        area: {
+                            fillColor: {
+                                linearGradient: {
+                                    x1: 0,
+                                    y1: 0,
+                                    x2: 0,
+                                    y2: 1
+                                },
+                                stops: [
+                                    [0, new Highcharts.getOptions().colors[0]],
+                                    [1, new Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                                ]
+                            },
+                            marker: {
+                                radius: 2
+                            },
+                            lineWidth: 1,
+                            states: {
+                                hover: {
+                                    lineWidth: 1
+                                }
+                            },
+                            threshold: null
+                        }
+                    },
+                    series: [{
+                        type: 'area',
+                        name: '美元兑欧元',
+                        data: data
+                    }]
+                });
+            });
+        }
+
+        function initScatter() {
+            // Step 2.3: 基于准备好的dom，初始化echarts实例
+            var chart = null;
+            // Step 2.4: 指定图表的配置项和数据
+            var options = {
+                chart: {
+                    type: 'scatter',
+                    zoomType: 'xy'
+                },
+                title: {
+                    text: '507 人按性别划分的身高和体重分布图'
+                },
+                subtitle: {
+                    text: '数据来源: Heinz  2003'
+                },
+                xAxis: {
+                    title: {
+                        enabled: true,
+                        text: '身高 (cm)'
+                    },
+                    startOnTick: true,
+                    endOnTick: true,
+                    showLastLabel: true
+                },
+                yAxis: {
+                    title: {
+                        text: '体重 (kg)'
+                    }
+                },
+                legend: {
+                    layout: 'vertical',
+                    align: 'left',
+                    verticalAlign: 'top',
+                    x: 100,
+                    y: 70,
+                    floating: true,
+                    backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
+                    borderWidth: 1
+                },
+                plotOptions: {
+                    scatter: {
+                        marker: {
+                            radius: 5,
+                            states: {
+                                hover: {
+                                    enabled: true,
+                                    lineColor: 'rgb(100,100,100)'
+                                }
+                            }
+                        },
+                        states: {
+                            hover: {
+                                marker: {
+                                    enabled: false
+                                }
+                            }
+                        },
+                        tooltip: {
+                            headerFormat: '<b>{series.name}</b><br>',
+                            pointFormat: '{point.x} cm, {point.y} kg'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: '女',
+                        color: 'rgba(223, 83, 83, .5)',
+                        data: []
+                    },
+                    {
+                        name: '男',
+                        color: 'rgba(119, 152, 191, .5)',
+                        data: []
+                    }]
+            }
+
+            $.ajax({
+                url: "/highcharts/scatter/",
+                type: "GET",
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        console.log(res.data.man, res.data.female)
+                        //注意数据类型是列表or字典
+                        options.series[0].data = res.data.man;
+                        options.series[1].data = res.data.female;
+                        console.log(options.series[0])
+                        //Step 2.5: 使用刚指定的配置项和数据显示图表。
+                        chart = Highcharts.chart('m5', options);
+                    } else {
+                        console.log("数据不存在")
+                    }
+
+                }
+            })
+        }
+    </script>
+
+{% endblock %}

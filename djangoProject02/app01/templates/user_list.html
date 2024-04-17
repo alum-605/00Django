@@ -1,0 +1,71 @@
+{% extends 'layout.html' %}
+{% block css %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div>
+            <a class="btn btn-success" href="/user/add"> 添加员工</a>
+            <a class="btn btn-success" href="/user/model/form/add"> 添加员工ModelForm</a>
+        </div>
+        <div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title fa fa-camera-retro"> 员工列表 </h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>员工姓名</th>
+                            <th>密码</th>
+                            <th>年龄</th>
+                            <th>账户余额</th>
+                            <th>创建时间</th>
+                            <th>性别</th>
+                            <th>所属部门</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in models %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>{{ item.username }}</td>
+                                <td>{{ item.password }}</td>
+                                <td>{{ item.age }}</td>
+                                <td>{{ item.account }}</td>
+                                <td>{{ item.create_time|date:"Y-m-d" }}</td>
+                                {#拿到原始字段#}
+                                {# <td>{{ item.gender }}</td> #}
+                                {# 拿到对应的映射字段  格式：get_字段名称_display() #}
+                                {# <td>{{ item.get_gender_display() }}</td> 模版语法不允许加()，会自动生成需要的括号，因此需要去掉 #}
+                                <td>{{ item.get_gender_display }}</td>
+                                {# 外键特有功能，自动去关联的表中取属性 直接用Department类中的depart属性即可 不用写成数据库中的存储的depart_id#}
+                                {# <td>{{ item.depart_id }}</td>#}
+                                {# 直接拿depart Departme类中额外写的的__str__自动返回.title #}
+                                <td>{{ item.depart }}</td>
+                                {# 如果类中没写__str__说明自动返回哪个字段 则需要在此处手动  .外键.需要字段 #}
+                                {# <td>{{ item.depart.title }}</td> #}
+                                <td>
+                                    <a class="btn btn-primary btn-xs"
+                                       href="/user/model/form/{{ item.id }}/edit/">编辑</a>
+
+                                    <a class="btn btn-danger btn-xs"
+                                       href="/user/model/form/{{ item.id }}/delete/">删除</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+        <ul class="pagination">
+            {{ page_str }}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block js %}{% endblock %}

@@ -1,0 +1,326 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block css %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div style="margin: 10px">
+            {# 方式1:js绑定 一定要用input标签 使用button标签会和自己写的js冲突 #}
+            <input type="button" class="btn btn-success" id="btnAdd" value="新建订单-0"/>
+
+
+            {# 方式2:BootStrap自带js插件 不需要写js部分 button处写好data-toggle="modal" data-target="#myModal"属性即可 #}
+            <input type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal" value="新建订单-1"/>
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
+                新建订单-2
+            </button>
+        </div>
+        <div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title fa fa-camera-retro"> 订单列表 </h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>订单编号</th>
+                            <th>商品名称</th>
+                            <th>价格</th>
+                            <th>支付状态</th>
+                            <th>用户</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in models %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>{{ item.order_id }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.price }}</td>
+                                <td>{{ item.get_status_display }}</td>
+                                <td>{{ item.user_o }}</td>
+                                <td>
+                                    <button did="{{ item.id }}" class="btn btn-primary btn-xs btn-edit">编 辑</button>
+                                    <!--did="xxx"自定义属性 方便jQuery定位-->
+                                    <button did="{{ item.id }}" class="btn btn-danger btn-xs btn-delete">删 除</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <ul class="pagination">
+            {{ page_str }}
+        </ul>
+
+    </div>
+
+
+
+
+    <!-- 新建&编辑 订单--对话框 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <!--对话框内容-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel"></h4>
+                </div>
+                <div class="modal-body">
+
+                    <form id="orderForm" method="post" novalidate>
+                        <div class="clearfix">
+                            {% for field in form %}
+                                <div class="col-xs-6">
+                                    <div class="form-group" style="position: relative; margin-bottom: 20px">
+                                        <label>{{ field.label }}</label>
+                                        {{ field }}
+                                        <span style="color: red; position: absolute" class="msg-error"></span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </form>
+
+                </div>
+                <div class="modal-footer">
+                    <!--data-dismiss="modal"关闭对话框-->
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                    <button id="btnSave" type="button" class="btn btn-primary">保 存</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!--删除对话框-->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+
+            <div class="alert alert-danger alert-dismissible fade in" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                        aria-hidden="true">×</span></button>
+                <h4>是否确定删除订单</h4>
+                <p style="margin: 10px">确认后将删除该条订单信息，不可撤回</p>
+                <!--style="text-align: right"设置靠右-->
+                <p style="text-align: right">
+                    <button id="btnConfirmDelete" type="button" class="btn btn-danger">确 认</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        //全局变量
+        let DELETE_ID;
+        let EDIT_ID;
+
+        $(function () {
+            bindBtnAddEvent();
+            bindBtnSaveEvent();
+
+            bindBtnDeleteEvent();
+            bindBtnConfirmDeleteEvent();
+
+            bindBtnEditDetailEvent();
+        })
+
+        //打开新建订单对话框
+        //js实现打开模态框
+        function bindBtnAddEvent() {
+            $('#btnAdd').click(function () {
+                //清空输入框中内容(当上次点击过编辑后会残留)
+                $("#orderForm")[0].reset();
+                //设置标题
+                $('#myModalLabel').text(' 新建订单');
+                $('#myModal').modal('show');
+            });
+        }
+
+        //BootStrap内置js也实现了 由新建订单-1 -2 体现 但这个就不能根据编辑还是新建修改对话框的标题
+
+        function bindBtnSaveEvent() {
+            $("#btnSave").click(function () {
+                //清空错误信息
+                $(".msg-error").empty();
+                //判断是新建还是编辑
+                if (EDIT_ID) {
+                    doEdit();
+                } else {
+                    doAdd()
+                }
+            });
+        }
+
+        function doAdd() {
+            //添加数据的Ajax请求
+            $.ajax({
+                url: "/order/add/",
+                type: "post",
+                data: $("#orderForm").serialize(),
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        //alert("添加成功");
+                        //输入框置空
+                        //jQuery对象----> $("#orderForm")  DOM对象----> $("#orderForm")[0] DOM对象才有reset()
+                        $("#orderForm")[0].reset();
+
+                        //关闭对话框
+                        $('#myModal').modal('hide');
+
+                        // js实现刷新页面
+                        location.reload();
+
+                    } else {
+                        //alert("添加失败")
+                        //$.each(对象,方式)
+                        $.each(res.error, function (k, v) {
+                            //console.log(k,v) 如titile ['这个字段是必填项。'] v是数组
+                            //django自动生成的标签都带一个id由"id_字段名"组成
+                            // console.log(k, v, v[0]) 为什么用v[0]见后端
+                            $("#id_" + k).next().text(v[0]);
+                            // $("#id_"+k)找到输入框 .next()找到在其下方的标签 .text(v)在其中添加内容
+                        });
+                    }
+                }
+            });
+
+        }
+
+        function doEdit() {
+            // 编辑的Ajax请求
+            $.ajax({
+                url: "/order/edit/" + "?eid=" + EDIT_ID,   // eid由get请求发送
+                type: "post",
+                data: $("#orderForm").serialize(),
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        //alert("添加成功");
+                        //输入框置空
+                        //jQuery对象----> $("#orderForm")  DOM对象----> $("#orderForm")[0] DOM对象才有reset()
+                        $("#orderForm")[0].reset();
+
+                        //关闭对话框
+                        $('#myModal').modal('hide');
+
+                        // js实现刷新页面
+                        location.reload();
+
+                        //全局变量置空
+                        EDIT_ID = 0
+
+                    } else {
+                        //alert("添加失败")
+                        if (res.tips) {
+                            alert(res.tips);
+                        } else {
+                            //$.each(对象,方式)
+                            $.each(res.error, function (k, v) {
+                                //console.log(k,v) 如titile ['这个字段是必填项。'] v是数组
+                                //django自动生成的标签都带一个id由"id_字段名"组成
+                                // console.log(k, v, v[0]) 为什么用v[0]见后端
+                                $("#id_" + k).next().text(v[0]);
+                                // $("#id_"+k)找到输入框 .next()找到在其下方的标签 .text(v)在其中添加内容
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
+
+        function bindBtnDeleteEvent() {
+            $('.btn-delete').click(function () {
+                $('#deleteModal').modal('show');
+                //获取当前行的id并赋值给全局变量
+                DELETE_ID = $(this).attr("did"); // $(this)指当前点击的标签
+                //console.log(DELETE_ID);
+
+            });
+        }
+
+        function bindBtnConfirmDeleteEvent() {
+            $("#btnConfirmDelete").click(function () {
+                //点击确认按钮，将全局变量中拿到的要删除行的id发送到后端
+                $.ajax({
+                    url: "/order/delete/",
+                    type: "POST",
+                    data: {
+                        did: DELETE_ID
+                    },
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            //alert("删除成功")
+                            $('#deleteModal').modal('hide');
+                            location.reload();
+                            //也可以不使用location.reload()刷新页面  使用js删除该行
+                            //全局变量置空
+                            DELETE_ID = 0
+                        } else {
+                            alert(res.error)
+                        }
+                    }
+                });
+            });
+        }
+
+        //打开编辑订单对话框 并显示该行数据
+        function bindBtnEditDetailEvent() {
+            $(".btn-edit").click(function () {
+                //清空输入框中内容
+                $("#orderForm")[0].reset();
+
+                var did = $(this).attr('did');
+                EDIT_ID = did;
+
+                //设置标题
+                $('#myModalLabel').text(' 编辑订单');
+
+                //发送Ajax去后台获取当前行的相关数据
+                $.ajax({
+                    url: "/order/edit/detail/",
+                    type: "POST",
+                    data: {
+                        did: did
+                    },
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            console.log(res)
+                            //将数据赋值到对应标签中
+                            $.each(res.data, function (k, v) {
+                                //django自动生成的标签都带一个id由"id_字段名"组成
+                                console.log(k, v)
+                                $("#id_" + k).val(v);
+                                // $("#id_"+k)找到输入框 .val(v)在其中赋值
+                            });
+                            //数据获取成功才显示对话框
+                            $('#myModal').modal('show');
+
+                        } else {
+                            alert(res.tips)
+                        }
+                    }
+                })
+            });
+        }
+
+
+    </script>
+{% endblock %}
