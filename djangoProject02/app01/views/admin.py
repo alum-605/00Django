@@ -76,21 +76,3 @@ def admin_reset(request, nid):
             return redirect("/admin/list/")
         else:
             return render(request, "change.html", {'title': title, 'form': form})
-
-
-def git_test(request, nid):
-    """重置密码"""
-    row_obj = Admin.objects.filter(id=nid).first()
-    title = "重置管理员密码--{}".format(row_obj.name)
-    if not row_obj:
-        return render(request, 'error.html', {"error_msg": "请求重置密码的管理员不存在"})
-    else:
-        if request.method == "GET":
-            form = AdminResetModelForm()
-            return render(request, "change.html", {'title': title, 'form': form})
-        form = AdminResetModelForm(data=request.POST, instance=row_obj)
-        if form.is_valid():
-            form.save()
-            return redirect("/admin/list/")
-        else:
-            return render(request, "change.html", {'title': title, 'form': form})
