@@ -76,3 +76,5 @@ def admin_reset(request, nid):
             return redirect("/admin/list/")
         else:
             return render(request, "change.html", {'title': title, 'form': form})
+
+# 自动合并失败，修正冲突然后提交修正的结果。

@@ -90,4 +90,5 @@ urlpatterns = [
     # 城市列表
     path('city/list/', city.city_list)
 
+
 ]
